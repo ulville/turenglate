@@ -12,4 +12,4 @@ A terminal program to get Turkish-English or English-Turkish translations from t
 
 ![Screenshot of the program's help](screenshots/turenglate-screenshot3.png)
 ![Screenshot of the program's output with -e option](screenshots/turenglate-screenshot2.png)
-![Screenshot of the program's output](screenshots/turenglate-screenshot2.png)
+![Screenshot of the program's output](screenshots/turenglate-screenshot1.png)
