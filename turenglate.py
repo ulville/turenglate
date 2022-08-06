@@ -17,6 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+from math import floor
 import requests
 from bs4 import BeautifulSoup
 import argparse
@@ -64,7 +65,7 @@ if tables:
 
     table_format = 'fancy_grid'
     terminal_width = os.get_terminal_size().columns
-    max_col_width = int(terminal_width / 3) - 5
+    max_col_width = floor((terminal_width - 16) / 3)
 
     for i, table in enumerate(tables):
         if (not (rel_filter in h2s[i].text)) or args.related:
@@ -73,10 +74,13 @@ if tables:
             print()
 
             rows = table.find_all('tr')
-            headers = list(map(lambda cell: cell.text.strip(
+            _headers = list(map(lambda cell: cell.text.strip(
                 '\n '), rows[0].find_all('th')))
-            headers.pop(0)
-            headers.pop()
+            _headers.pop(0)
+            _headers.pop()
+            for index, header in enumerate(_headers):
+                _headers[index] = '\n'.join(wrap(header, max_col_width))
+
             tureng_table = []
 
             for row in rows:
@@ -92,7 +96,7 @@ if tables:
 
                     tureng_table.append(cells)
 
-            print(tabulate(tureng_table, headers=headers, tablefmt=table_format))
+            print(tabulate(tureng_table, headers=_headers, tablefmt=table_format))
 else:
     message = soup.find('h1')
     print(message.text)
