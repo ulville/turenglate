@@ -25,7 +25,7 @@ from bs4 import BeautifulSoup
 import argparse
 import argcomplete
 from tabulate import tabulate
-import os
+import shutil
 from textwrap import wrap
 
 def tureng_phrase_completer(prefix, parsed_args, **kwargs):
@@ -77,7 +77,7 @@ if tables:
     h2s = soup.find_all('h2')
 
     table_format = 'fancy_grid'
-    terminal_width = os.get_terminal_size().columns
+    terminal_width = shutil.get_terminal_size().columns
     max_col_width = floor((terminal_width - 16) / 3)
 
     for i, table in enumerate(tables):
