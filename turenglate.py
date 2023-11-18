@@ -2,7 +2,7 @@
 
 # Turenglate : A terminal program to get Turkish-English or
 # English-Turkish translations from the online dictionary tureng.com
-# Copyright (C) 2022  Ulvican Kahya aka ulville
+# Copyright (C) 2022-2023  Ulvican Kahya aka ulville
 
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
