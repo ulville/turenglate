@@ -20,6 +20,7 @@
 
 from math import floor
 import requests
+import urllib.parse
 from bs4 import BeautifulSoup
 import argparse
 import argcomplete
@@ -27,9 +28,9 @@ from tabulate import tabulate
 import os
 from textwrap import wrap
 
-def tureng_suggestions(prefix, parsed_args, **kwargs):
+def tureng_phrase_completer(prefix, parsed_args, **kwargs):
     url = "https://ac.tureng.co/"
-    querystring = {"t":prefix,"l":"entr"}
+    querystring = {"t":urllib.parse.quote(prefix),"l":"entr"}
     return (requests.get(url, params=querystring).json())
 
 parser = argparse.ArgumentParser(
@@ -42,7 +43,7 @@ parser.add_argument(
 parser.add_argument(
     "-e", "--english", help="use english header and category names", action='store_true')
 parser.add_argument("phrase", nargs='*',
-                    help="specify the phrase to translate").completer = tureng_suggestions
+                    help="specify the phrase to translate").completer = tureng_phrase_completer
 argcomplete.autocomplete(parser)
 args = parser.parse_args()
 
@@ -53,10 +54,11 @@ else:
     lang = 'tr/turkce-ingilizce/'
     rel_filter = 'terimlerle'
 
-query = ''
+query_raw = ''
 
 if args.phrase:
-    query = ' '.join(args.phrase)
+    query_raw = ' '.join(args.phrase)
+    query = urllib.parse.quote(query_raw)
 else:
     parser.print_help()
     exit()
