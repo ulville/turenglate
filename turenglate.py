@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# PYTHON_ARGCOMPLETE_OK
 
 # Turenglate : A terminal program to get Turkish-English or
 # English-Turkish translations from the online dictionary tureng.com
@@ -21,18 +22,28 @@ from math import floor
 import requests
 from bs4 import BeautifulSoup
 import argparse
+import argcomplete
 from tabulate import tabulate
 import os
 from textwrap import wrap
 
+def tureng_suggestions(prefix, parsed_args, **kwargs):
+    url = "https://ac.tureng.co/"
+    querystring = {"t":prefix,"l":"entr"}
+    return (requests.get(url, params=querystring).json())
+
 parser = argparse.ArgumentParser(
-    description='Get Turkish-English or English-Turkish translations from Tureng')
+    description='Get Turkish-English or English-Turkish translations from Tureng',
+    epilog="Hitting <TAB> twice, after typing a couple of characters for the phrase "
+     + "you want to translate, will get the suggestions. If it only has one suggestion, "
+     + "a single <TAB> will complete the phrase for you.")
 parser.add_argument(
     "-r", "--related", help="show other phrases containing the query phrase", action='store_true')
 parser.add_argument(
     "-e", "--english", help="use english header and category names", action='store_true')
 parser.add_argument("phrase", nargs='*',
-                    help="specify the phrase to translate")
+                    help="specify the phrase to translate").completer = tureng_suggestions
+argcomplete.autocomplete(parser)
 args = parser.parse_args()
 
 if args.english:
