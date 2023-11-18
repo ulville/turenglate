@@ -30,7 +30,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument(
     "-r", "--related", help="show other phrases containing the query phrase", action='store_true')
 parser.add_argument(
-    "-e", "--english", help="use english header and categorie names", action='store_true')
+    "-e", "--english", help="use english header and category names", action='store_true')
 parser.add_argument("phrase", nargs='*',
                     help="specify the phrase to translate")
 args = parser.parse_args()
