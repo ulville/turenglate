@@ -24,59 +24,80 @@ import urllib.parse
 from bs4 import BeautifulSoup
 import argparse
 import argcomplete
-from tabulate import tabulate
+from tabulate import tabulate, multiline_formats
 import shutil
 from textwrap import wrap
 
+
 def tureng_phrase_completer(prefix, parsed_args, **kwargs):
     url = "https://ac.tureng.co/"
-    querystring = {"t":urllib.parse.quote(prefix),"l":"entr"}
-    return (requests.get(url, params=querystring).json())
+    querystring = {"t": urllib.parse.quote(prefix), "l": "entr"}
+    return requests.get(url, params=querystring).json()
+
 
 parser = argparse.ArgumentParser(
-    description='Get Turkish-English or English-Turkish translations from Tureng',
-    epilog="Hitting <TAB> twice, after typing a couple of characters for the phrase "
-     + "you want to translate, will get the suggestions. If it only has one suggestion, "
-     + "a single <TAB> will complete the phrase for you.")
+    description="Get Turkish-English or English-Turkish translations from Tureng",
+    epilog="Hitting <TAB> twice, after typing a couple of characters will get the \
+        suggestions. If it only has one suggestion, a single <TAB> will complete \
+            the phrase for you.",
+)
 parser.add_argument(
-    "-r", "--related", help="show other phrases containing the query phrase", action='store_true')
+    "-r",
+    "--related",
+    help="show other phrases containing the query phrase",
+    action="store_true",
+)
 parser.add_argument(
-    "-e", "--english", help="use english header and category names", action='store_true')
-parser.add_argument("phrase", nargs='*',
-                    help="specify the phrase to translate").completer = tureng_phrase_completer
+    "-e",
+    "--english",
+    help="use english header and category names",
+    action="store_true",
+)
+parser.add_argument(
+    "-s",
+    "--style",
+    help="set the style of the table. Hit <TAB> to see the options",
+    default="fancy_grid",
+    choices=multiline_formats,
+    metavar="STYLE",
+)
+parser.add_argument(
+    "phrase", nargs="*", help="specify the phrase to translate"
+).completer = tureng_phrase_completer
+
 argcomplete.autocomplete(parser)
 args = parser.parse_args()
 
 if args.english:
-    lang = 'en/turkish-english/'
-    rel_filter = 'other'
+    lang = "en/turkish-english/"
+    rel_filter = "other"
 else:
-    lang = 'tr/turkce-ingilizce/'
-    rel_filter = 'terimlerle'
+    lang = "tr/turkce-ingilizce/"
+    rel_filter = "terimlerle"
 
-query_raw = ''
+query_raw = ""
 
 if args.phrase:
-    query_raw = ' '.join(args.phrase)
+    query_raw = " ".join(args.phrase)
     query = urllib.parse.quote(query_raw)
 else:
     parser.print_help()
     exit()
 
-base_url = 'https://tureng.com/'
+base_url = "https://tureng.com/"
 headers = {
-    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0'}
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0"
+}
 url = base_url + lang + str(query)
-print(url)
 
 r = requests.get(url, headers=headers)
-soup = BeautifulSoup(r.content, 'lxml')
-tables = soup.find_all('table', class_='searchResultsTable')
+soup = BeautifulSoup(r.content, "lxml")
+tables = soup.find_all("table", class_="searchResultsTable")
 
 if tables:
-    h2s = soup.find_all('h2')
+    h2s = soup.find_all("h2")
 
-    table_format = 'fancy_grid'
+    table_format = args.style
     terminal_width = shutil.get_terminal_size().columns
     max_col_width = floor((terminal_width - 16) / 3)
 
@@ -86,37 +107,59 @@ if tables:
             print(h2s[i].text)
             print()
 
-            rows = table.find_all('tr')
-            _headers = list(map(lambda cell: cell.text.strip(
-                '\n '), rows[0].find_all('th')))
+            rows = table.find_all("tr")
+            for ri, row in enumerate(rows):
+                if "class" in row.attrs.keys() and "termresults-ad-tr" in row["class"]:
+                    rows.pop(ri)
+            _headers = list(
+                map(lambda cell: cell.text.strip("\n "), rows[0].find_all("th"))
+            )
             _headers.pop(0)
             _headers.pop()
             for index, header in enumerate(_headers):
-                _headers[index] = '\n'.join(wrap(header, max_col_width))
+                _headers[index] = "\n".join(
+                    list(
+                        map(
+                            lambda header_line: f"\033[01m{header_line}\033[0m",
+                            wrap(header, max_col_width),
+                        )
+                    )
+                )
 
             tureng_table = []
 
-            for row in rows:
+            for rindex, row in enumerate(rows):
                 cells = list(
-                    map(lambda cell: cell.text.strip('\n '), row.find_all('td')))
+                    map(lambda cell: cell.text.strip("\n "), row.find_all("td"))
+                )
 
                 if (len(cells)) >= 5:
                     cells.pop(0)
                     cells.pop()
 
                     for index, cell in enumerate(cells):
-                        cells[index] = '\n'.join(wrap(cell, max_col_width))
+                        if rindex % 2 == 0:
+                            cell = f"\033[2m{cell}\033[0m"
+                        # '\n'.join(wrap(cell, max_col_width))
+                        cells[index] = cell
 
                     tureng_table.append(cells)
 
-            print(tabulate(tureng_table, headers=_headers, tablefmt=table_format))
+            print(
+                tabulate(
+                    tureng_table,
+                    headers=_headers,
+                    tablefmt=table_format,
+                    maxcolwidths=max_col_width,
+                )
+            )
 else:
-    message = soup.find('h1')
+    message = soup.find("h1")
     print(message.text)
-    suggestion_ul = soup.find('ul', class_='suggestion-list')
+    suggestion_ul = soup.find("ul", class_="suggestion-list")
 
     if suggestion_ul:
-        suggestions = suggestion_ul.find_all('a')
+        suggestions = suggestion_ul.find_all("a")
 
         for suggestion in suggestions:
             print(suggestion.text)
