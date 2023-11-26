@@ -37,9 +37,11 @@ def tureng_phrase_completer(prefix, parsed_args, **kwargs):
 
 parser = argparse.ArgumentParser(
     description="Get Turkish-English or English-Turkish translations from Tureng",
-    epilog="Hitting <TAB> twice, after typing a couple of characters will get the \
-        suggestions. If it only has one suggestion, a single <TAB> will complete \
-            the phrase for you.",
+    epilog=(
+        "Hitting <TAB> twice, after typing a couple of characters will get the "
+        "suggestions. If it only has one suggestion, a single <TAB> will complete "
+        "the phrase for you."
+    ),
 )
 parser.add_argument(
     "-r",
