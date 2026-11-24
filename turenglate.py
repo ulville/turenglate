@@ -96,72 +96,79 @@ r = requests.get(url, headers=headers)
 soup = BeautifulSoup(r.content, "lxml")
 tables = soup.find_all("table", class_="searchResultsTable")
 
-if tables:
-    h2s = soup.find_all("h2")
 
-    table_format = args.style
-    terminal_width = shutil.get_terminal_size().columns
-    max_col_width = floor((terminal_width - 16) / 3)
-
-    for i, table in enumerate(tables):
-        if (not (rel_filter in h2s[i].text)) or args.related:
-            print()
-            print(h2s[i].text)
-            print()
-
-            rows = table.find_all("tr")
-            for ri, row in enumerate(rows):
-                if "class" in row.attrs.keys() and "termresults-ad-tr" in row["class"]:
-                    rows.pop(ri)
-            _headers = list(
-                map(lambda cell: cell.text.strip("\n "), rows[0].find_all("th"))
-            )
-            _headers.pop(0)
-            _headers.pop()
-            for index, header in enumerate(_headers):
-                _headers[index] = "\n".join(
-                    list(
-                        map(
-                            lambda header_line: f"\033[01m{header_line}\033[0m",
-                            wrap(header, max_col_width),
-                        )
-                    )
-                )
-
-            tureng_table = []
-
-            for rindex, row in enumerate(rows):
-                cells = list(
-                    map(lambda cell: cell.text.strip("\n "), row.find_all("td"))
-                )
-
-                if (len(cells)) >= 5:
-                    cells.pop(0)
-                    cells.pop()
-
-                    for index, cell in enumerate(cells):
-                        if rindex % 2 == 0:
-                            cell = f"\033[2m{cell}\033[0m"
-                        # '\n'.join(wrap(cell, max_col_width))
-                        cells[index] = cell
-
-                    tureng_table.append(cells)
-
-            print(
-                tabulate(
-                    tureng_table,
-                    headers=_headers,
-                    tablefmt=table_format,
-                    maxcolwidths=max_col_width,
-                )
-            )
-else:
+if not tables:
     message = soup.find("h1")
     print(message.text)
-    suggestion_ul = soup.find("ul", class_="suggestion-list")
+    suggestion_ul = soup.find("ol", class_="suggestion-list")
 
     if suggestion_ul:
         suggestions = suggestion_ul.find_all("a")
-
         for suggestion in suggestions:
             print(suggestion.text)
+
+    exit(1)
+
+
+h2s = soup.find_all("h2")
+
+table_format = args.style
+terminal_width = shutil.get_terminal_size().columns
+max_col_width = floor((terminal_width - 16) / 3)
+
+for i, table in enumerate(tables):
+    if not ((not (rel_filter in h2s[i].text)) or args.related):
+        continue
+
+    print()
+    print(h2s[i].text)
+    print()
+
+    rows = table.find_all("tr")
+    for ri, row in enumerate(rows):
+        if "class" in row.attrs.keys() and "termresults-ad-tr" in row["class"]:
+            rows.pop(ri)
+    _headers = list(
+        map(lambda cell: cell.text.strip("\n "), rows[0].find_all("th"))
+    )
+    _headers.pop(0)
+    _headers.pop()
+    for index, header in enumerate(_headers):
+        _headers[index] = "\n".join(
+            list(
+                map(
+                    lambda header_line: f"\033[01m{header_line}\033[0m",
+                    wrap(header, max_col_width),
+                )
+            )
+        )
+
+    tureng_table = []
+
+    for rindex, row in enumerate(rows):
+        cells = list(
+            map(lambda cell: cell.text.strip("\n "), row.find_all("td"))
+        )
+
+        if len(cells) < 5:
+            continue
+
+        cells.pop(0)
+        cells.pop()
+
+        for index, cell in enumerate(cells):
+            if any("even" in cl for cl in row["class"]):
+                cell = f"\033[2m{cell}\033[0m"
+            # '\n'.join(wrap(cell, max_col_width))
+            cells[index] = cell
+
+        tureng_table.append(cells)
+
+    print(
+        tabulate(
+            tureng_table,
+            headers=_headers,
+            tablefmt=table_format,
+            maxcolwidths=max_col_width,
+        )
+    )
